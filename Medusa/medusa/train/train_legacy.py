@@ -221,6 +221,34 @@ def preprocess(
         attention_mask=input_ids.ne(tokenizer.pad_token_id),
     )
 
+def preprocess_qwen(
+    messages,
+    tokenizer: transformers.PreTrainedTokenizer,
+    max_len: int,
+) -> Dict:
+    """Preprocesses the data for supervised fine-tuning."""
+
+    texts = []
+    for i, msg in enumerate(messages):
+        texts.append(
+            tokenizer.apply_chat_template(
+                msg,
+                # chat_template=TEMPLATE,
+                tokenize=True,
+                add_generation_prompt=False,
+                padding="max_length",
+                max_length=max_len,
+                truncation=True,
+            )
+        )
+    input_ids = torch.tensor(texts, dtype=torch.int)
+    target_ids = input_ids.clone()
+    target_ids[target_ids == tokenizer.pad_token_id] = IGNORE_TOKEN_ID
+    attention_mask = input_ids.ne(tokenizer.pad_token_id)
+
+    return dict(
+        input_ids=input_ids, target_ids=target_ids, attention_mask=attention_mask
+    )
 
 class SupervisedDataset(Dataset):
     """Dataset for supervised fine-tuning.
@@ -279,7 +307,8 @@ class LazySupervisedDataset(Dataset):
             return self.cached_data_dict[i]
 
         # ret = preprocess([self.raw_data[i]], self.tokenizer)
-        ret = preprocess(self.raw_data[i], self.tokenizer)
+        # ret = preprocess(self.raw_data[i], self.tokenizer)
+        ret = preprocess_qwen([self.raw_data[i]["messages"]], self.tokenizer, 4096)
         ret = dict(
             input_ids=ret["input_ids"][0],
             labels=ret["labels"][0],
@@ -329,7 +358,8 @@ def train():
     # print args
     print(model_args)
     print(data_args)
-    print(training_args)
+    print(training_args) 
+    training_args.report_to = None
 
     local_rank = training_args.local_rank
 

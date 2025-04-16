@@ -8,9 +8,9 @@ source ~/miniconda3/etc/profile.d/conda.sh
 
 conda activate py310
 
-source .env
-
 cd /jet/home/$USER/15442-project/Medusa
+
+source .env
 
 #echo commands to stdout
 set -x
