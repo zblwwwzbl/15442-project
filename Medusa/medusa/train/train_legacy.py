@@ -318,6 +318,7 @@ class LazySupervisedDataset(Dataset):
         # ret = preprocess_qwen([self.raw_data[i]], self.tokenizer, 4096) # tried
         ret = preprocess_qwen(self.raw_data[i], self.tokenizer, 4096)
         # print("Ret1: ", ret)
+        # assert(False)
         ret = dict(
             input_ids=ret["input_ids"][0],
             labels=ret["target_ids"][0],
