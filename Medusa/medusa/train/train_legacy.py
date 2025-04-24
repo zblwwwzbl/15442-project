@@ -40,6 +40,7 @@ from medusa.model.medusa_model_legacy import MedusaModel, MedusaConfig
 
 IGNORE_TOKEN_ID = LabelSmoother.ignore_index
 
+os.environ["WANDB_DISABLED"] = "true"
 
 # Customized for training Medusa heads
 class CustomizedTrainer(Trainer):
@@ -306,9 +307,15 @@ class LazySupervisedDataset(Dataset):
         if i in self.cached_data_dict:
             return self.cached_data_dict[i]
 
+        print("Raw data: ", self.raw_data[i])
+        print("Raw data type: ", type(self.raw_data), type(self.raw_data[i]))
+
         # ret = preprocess([self.raw_data[i]], self.tokenizer)
         # ret = preprocess(self.raw_data[i], self.tokenizer)
-        ret = preprocess_qwen([self.raw_data[i]["messages"]], self.tokenizer, 4096)
+        
+        # ret = preprocess_qwen([self.raw_data[i]], self.tokenizer, 4096) # tried
+        ret = preprocess_qwen(self.raw_data[i], self.tokenizer, 4096)
+        print("Ret1: ", ret)
         ret = dict(
             input_ids=ret["input_ids"][0],
             labels=ret["labels"][0],
@@ -356,10 +363,11 @@ def train():
     )
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
     # print args
-    print(model_args)
-    print(data_args)
-    print(training_args) 
-    training_args.report_to = None
+     
+    # training_args.report_to = "none"
+    # print(model_args)
+    # print(data_args)
+    print("Report to: ", training_args.report_to)
 
     local_rank = training_args.local_rank
 
