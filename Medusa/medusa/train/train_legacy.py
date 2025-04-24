@@ -30,13 +30,14 @@ import transformers
 from transformers import Trainer, BitsAndBytesConfig
 from transformers.trainer_pt_utils import LabelSmoother
 from safetensors.torch import save_file
+from torch.cuda.amp import autocast
 
 from fastchat.conversation import SeparatorStyle
 from fastchat.model.model_adapter import get_conversation_template
 from torch.nn import CrossEntropyLoss
 from torch.nn import functional as F
 import os
-from medusa.model.medusa_model_legacy import MedusaModel, MedusaConfig
+from medusa.model.medusa_model import MedusaModel, MedusaConfig
 
 IGNORE_TOKEN_ID = LabelSmoother.ignore_index
 
@@ -44,7 +45,7 @@ os.environ["WANDB_DISABLED"] = "true"
 
 # Customized for training Medusa heads
 class CustomizedTrainer(Trainer):
-    def compute_loss(self, model, inputs, return_outputs=False):
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         """
         Compute the training loss for the model.
 
@@ -90,6 +91,7 @@ class CustomizedTrainer(Trainer):
 
             log[f"medusa{i}_loss"] = loss_i.item()
         self.log(log)
+        
         return (loss, logits) if return_outputs else loss
 
 
@@ -307,18 +309,18 @@ class LazySupervisedDataset(Dataset):
         if i in self.cached_data_dict:
             return self.cached_data_dict[i]
 
-        print("Raw data: ", self.raw_data[i])
-        print("Raw data type: ", type(self.raw_data), type(self.raw_data[i]))
+        # print("Raw data: ", self.raw_data[i])
+        # print("Raw data type: ", type(self.raw_data), type(self.raw_data[i]))
 
         # ret = preprocess([self.raw_data[i]], self.tokenizer)
         # ret = preprocess(self.raw_data[i], self.tokenizer)
         
         # ret = preprocess_qwen([self.raw_data[i]], self.tokenizer, 4096) # tried
         ret = preprocess_qwen(self.raw_data[i], self.tokenizer, 4096)
-        print("Ret1: ", ret)
+        # print("Ret1: ", ret)
         ret = dict(
             input_ids=ret["input_ids"][0],
-            labels=ret["labels"][0],
+            labels=ret["target_ids"][0],
             attention_mask=ret["attention_mask"][0],
         )
         self.cached_data_dict[i] = ret
@@ -392,6 +394,16 @@ def train():
     tokenizer.pad_token = tokenizer.unk_token
     tokenizer.pad_token = tokenizer.eos_token
 
+    tokenizer.chat_template = (
+        "{% for message in messages %}"
+        "{% if message['role'] == 'user' %}"
+        "USER: {{ message['content'] }}\n"
+        "{% elif message['role'] == 'assistant' %}"
+        "ASSISTANT: {{ message['content'] }}\n"
+        "{% endif %}"
+        "{% endfor %}"
+        "ASSISTANT:"
+    )
     # Making sure the tokenizer works before loading the model.
     print(tokenizer(["This is a test", "secondary"], padding=True))
     print(tokenizer.apply_chat_template([{"role": "user", "content": "This is a test"}]))
@@ -401,8 +413,8 @@ def train():
         model_args.model_name_or_path,
         config=config,
         cache_dir=training_args.cache_dir,
-        # torch_dtype=torch.bfloat16,
-        torch_dtype=torch.float16,
+        torch_dtype=torch.bfloat16,
+        # torch_dtype=torch.float16,
     )
 
     # Freeze the base model
