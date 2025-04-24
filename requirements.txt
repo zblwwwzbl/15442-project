@@ -30,7 +30,6 @@ markdown-it-py==3.0.0
 markdown2==2.5.3
 MarkupSafe==3.0.2
 mdurl==0.1.2
--e git+ssh://git@github.com/zblwwwzbl/15442-project.git@c701723a1f76cd73c807cf828f97a09d000a3860#egg=medusa_llm&subdirectory=Medusa
 mpmath==1.3.0
 multidict==6.4.3
 networkx==3.4.2
