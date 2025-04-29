@@ -4,6 +4,7 @@ import torch
 from medusa.model.medusa_model import MedusaModel
 from fastchat.model.model_adapter import get_conversation_template
 
+
 # Global variables
 chat_history = ""
 model = None

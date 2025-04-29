@@ -29,7 +29,8 @@ from torch.utils.data import Dataset
 import transformers
 from transformers import Trainer, BitsAndBytesConfig
 from transformers.trainer_pt_utils import LabelSmoother
-from safetensors.torch import save_file
+from safetensors.torch import save_file, load_file
+import time
 
 from fastchat.conversation import SeparatorStyle
 from fastchat.model.model_adapter import get_conversation_template
@@ -427,6 +428,181 @@ def train():
             state_dict,
             os.path.join(training_args.output_dir, "medusa_lm_head.safetensors"),
         )
+    return
+
+def training_run(epochs, model_args):
+    global local_rank
+
+    data_args = {
+        "data_path":  "ShareGPT_Vicuna_unfiltered/ShareGPT_V4.3_unfiltered_cleaned_split.json",
+    }
+
+    training_args = {
+        "bf16": False,
+        "fp16": True,
+        "output_dir": "test",
+        "num_train_epochs": epochs,
+        "per_device_train_batch_size": 8,
+        "per_device_eval_batch_size": 8,
+        "gradient_accumulation_steps": 4,
+        "evaluation_strategy": "no",
+        "save_strategy": "no",
+        "learning_rate": 1e-3,
+        "weight_decay": 0.0,
+        "warmup_ratio": 0.1,
+        "lr_scheduler_type": "cosine",
+        "logging_steps": 1,
+        "model_max_length": 2048,
+        "lazy_preprocess": True,
+        "medusa_num_heads": 3,
+        "medusa_num_layers": 1,
+    }
+    # print args
+    print(model_args)
+    print(data_args)
+    print(training_args)
+
+    local_rank = training_args.local_rank
+
+    # Set RoPE scaling factor
+    config = transformers.AutoConfig.from_pretrained(
+        model_args.model_name_or_path,
+        cache_dir=training_args.cache_dir,
+    )
+    orig_ctx_len = getattr(config, "max_position_embeddings", None)
+    if orig_ctx_len and training_args.model_max_length > orig_ctx_len:
+        scaling_factor = float(math.ceil(training_args.model_max_length / orig_ctx_len))
+        config.rope_scaling = {"type": "linear", "factor": scaling_factor}
+    config.use_cache = False
+
+    tokenizer = transformers.AutoTokenizer.from_pretrained(
+        model_args.model_name_or_path,
+        cache_dir=training_args.cache_dir,
+        model_max_length=training_args.model_max_length,
+        padding_side="right",
+        use_fast=True,
+    )
+    tokenizer.pad_token = tokenizer.unk_token
+    tokenizer.pad_token = tokenizer.eos_token
+
+    # Making sure the tokenizer works before loading the model.
+    print(tokenizer(["This is a test", "secondary"], padding=True))
+    print(tokenizer.apply_chat_template([{"role": "user", "content": "This is a test"}]))
+
+    # Load model and tokenizer
+    model = transformers.AutoModelForCausalLM.from_pretrained(
+        model_args.model_name_or_path,
+        config=config,
+        cache_dir=training_args.cache_dir,
+        # torch_dtype=torch.bfloat16,
+        torch_dtype=torch.float16,
+    )
+
+    # Freeze the base model
+    for param in model.base_model.parameters():
+        param.requires_grad = False
+
+    # Add Medusa heads
+    medusa_lm_head = MedusaModel(
+        model,
+        medusa_num_heads=training_args.medusa_num_heads,
+        medusa_num_layers=training_args.medusa_num_layers,
+        base_model_name_or_path=model_args.model_name_or_path,
+    )
+
+    # Format output dir
+    training_args.output_dir = f"{training_args.output_dir}_medusa_mlp_{model_args.model_name_or_path.split('/')[-1]}_medusa_{training_args.medusa_num_heads}_lr_{training_args.learning_rate}_layers_{training_args.medusa_num_layers}"
+
+    # Load data
+    data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
+
+    # Generate Medusa config for pushing to HF hub
+    medusa_config = MedusaConfig(
+        medusa_num_heads=training_args.medusa_num_heads,
+        medusa_num_layers=training_args.medusa_num_layers,
+        base_model_name_or_path=model_args.model_name_or_path,
+        version="2"
+    )
+
+    # Save Medusa config
+    medusa_config.save_pretrained(training_args.output_dir)
+
+    # Start trainner
+    trainer = CustomizedTrainer(
+        model=medusa_lm_head, tokenizer=tokenizer, args=training_args, **data_module
+    )
+
+    if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
+        trainer.train(resume_from_checkpoint=True)
+    else:
+        trainer.train()
+    # === Inference speed evaluation ===
+    # Prepare a single batch for inference speed measurement
+    import time
+
+    model = trainer.model
+    model.eval()
+
+    # Select a single prompt from the train dataset
+    example = data_module["train_dataset"][0]
+    input_ids = example["input_ids"].unsqueeze(0).to(model.device)
+    attention_mask = example["attention_mask"].unsqueeze(0).to(model.device)
+
+    # Generation arguments for Medusa speculative decoding
+    gen_kwargs = {
+        "input_ids": input_ids,
+        "attention_mask": attention_mask,
+        #TODO: add more args?
+    }
+
+    # Warm-up run (not timed)
+    with torch.no_grad():
+        _ = list(model.medusa_generate(**gen_kwargs))
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+
+    # Timed runs for averaging
+    num_runs = 10
+    latencies = []
+    for _ in range(num_runs):
+        start_time = time.time()
+        with torch.no_grad():
+            _ = list(model.medusa_generate(**gen_kwargs))
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
+        latencies.append(time.time() - start_time)
+
+    avg_latency = sum(latencies) / num_runs
+    requests_per_sec = 1.0 / avg_latency
+    print(f"Avg speculative decoding speed over {num_runs} runs: {requests_per_sec:.2f} requests/sec, avg latency: {avg_latency:.4f} sec")
+    # === End speculative decoding speed evaluation ===
+
+    model.config.use_cache = True
+    trainer.save_state()
+    safe_save_model_for_hf_trainer(trainer=trainer, output_dir=training_args.output_dir)
+    # Save MedusaHead seperately
+    if hasattr(medusa_lm_head, "module"):
+        lm_head = medusa_lm_head.module.medusa_head
+    else:
+        lm_head = medusa_lm_head.medusa_head
+    import deepspeed
+    with deepspeed.zero.GatheredParameters(lm_head.parameters()):
+        state_dict = lm_head.state_dict()
+
+    # Save Medusa heads
+    if local_rank == 0:
+        # Modify the tokenizer internal state before saving.
+        tokenizer.encode("Test", truncation=None, padding="do_not_pad")
+        tokenizer.save_pretrained(training_args.output_dir)
+        save_file(
+            state_dict,
+            os.path.join(training_args.output_dir, "medusa_lm_head.safetensors"),
+        )
+    
+    return avg_latency
+
+def load_and_eval_model(model_args):
+
 
 
 if __name__ == "__main__":
