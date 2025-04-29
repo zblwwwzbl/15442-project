@@ -1,0 +1,702 @@
++ torchrun --nproc_per_node=4 medusa/train/train_legacy.py --model_name_or_path lmsys/vicuna-7b-v1.3 --data_path ShareGPT_Vicuna_unfiltered/ShareGPT_V4.3_unfiltered_cleaned_split.json --bf16 False --fp16 True --output_dir test --num_train_epochs 1 --per_device_train_batch_size 8 --per_device_eval_batch_size 8 --gradient_accumulation_steps 4 --evaluation_strategy no --save_strategy no --learning_rate 1e-3 --weight_decay 0.0 --warmup_ratio 0.1 --lr_scheduler_type cosine --logging_steps 1 --model_max_length 2048 --lazy_preprocess True --medusa_num_heads 3 --medusa_num_layers 1
+W0416 16:07:37.065000 100670 site-packages/torch/distributed/run.py:792] 
+W0416 16:07:37.065000 100670 site-packages/torch/distributed/run.py:792] *****************************************
+W0416 16:07:37.065000 100670 site-packages/torch/distributed/run.py:792] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0416 16:07:37.065000 100670 site-packages/torch/distributed/run.py:792] *****************************************
+/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/utils/generic.py:311: FutureWarning: `torch.utils._pytree._register_pytree_node` is deprecated. Please use `torch.utils._pytree.register_pytree_node` instead.
+  torch.utils._pytree._register_pytree_node(
+/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/utils/generic.py:311: FutureWarning: `torch.utils._pytree._register_pytree_node` is deprecated. Please use `torch.utils._pytree.register_pytree_node` instead.
+  torch.utils._pytree._register_pytree_node(
+/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/utils/generic.py:311: FutureWarning: `torch.utils._pytree._register_pytree_node` is deprecated. Please use `torch.utils._pytree.register_pytree_node` instead.
+  torch.utils._pytree._register_pytree_node(
+/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/utils/generic.py:311: FutureWarning: `torch.utils._pytree._register_pytree_node` is deprecated. Please use `torch.utils._pytree.register_pytree_node` instead.
+  torch.utils._pytree._register_pytree_node(
+ModelArguments(model_name_or_path='lmsys/vicuna-7b-v1.3', load_in_4bit=False, load_in_8bit=False)
+DataArguments(data_path='ShareGPT_Vicuna_unfiltered/ShareGPT_V4.3_unfiltered_cleaned_split.json', eval_data_path=None, lazy_preprocess=True)
+TrainingArguments(
+_n_gpu=1,
+adafactor=False,
+adam_beta1=0.9,
+adam_beta2=0.999,
+adam_epsilon=1e-08,
+auto_find_batch_size=False,
+bf16=False,
+bf16_full_eval=False,
+cache_dir=None,
+data_seed=None,
+dataloader_drop_last=False,
+dataloader_num_workers=0,
+dataloader_pin_memory=True,
+ddp_backend=None,
+ddp_broadcast_buffers=None,
+ddp_bucket_cap_mb=None,
+ddp_find_unused_parameters=None,
+ddp_timeout=1800,
+debug=[],
+deepspeed=None,
+disable_tqdm=False,
+dispatch_batches=None,
+do_eval=False,
+do_predict=False,
+do_train=False,
+eval_accumulation_steps=None,
+eval_delay=0,
+eval_steps=None,
+evaluation_strategy=no,
+fp16=True,
+fp16_backend=auto,
+fp16_full_eval=False,
+fp16_opt_level=O1,
+fsdp=[],
+fsdp_config={'min_num_params': 0, 'xla': False, 'xla_fsdp_grad_ckpt': False},
+fsdp_min_num_params=0,
+fsdp_transformer_layer_cls_to_wrap=None,
+full_determinism=False,
+gradient_accumulation_steps=4,
+gradient_checkpointing=False,
+greater_is_better=None,
+group_by_length=False,
+half_precision_backend=auto,
+hub_always_push=False,
+hub_model_id=None,
+hub_private_repo=False,
+hub_strategy=every_save,
+hub_token=<HUB_TOKEN>,
+ignore_data_skip=False,
+include_inputs_for_metrics=False,
+include_tokens_per_second=False,
+jit_mode_eval=False,
+label_names=None,
+label_smoothing_factor=0.0,
+learning_rate=0.001,
+length_column_name=length,
+load_best_model_at_end=False,
+local_rank=0,
+log_level=passive,
+log_level_replica=warning,
+log_on_each_node=True,
+logging_dir=test/runs/Apr16_16-07-42_v020.ib.bridges2.psc.edu,
+logging_first_step=False,
+logging_nan_inf_filter=True,
+logging_steps=1.0,
+logging_strategy=steps,
+lr_scheduler_type=cosine,
+max_grad_norm=1.0,
+max_steps=-1,
+medusa_num_heads=3,
+medusa_num_layers=1,
+metric_for_best_model=None,
+model_max_length=2048,
+mp_parameters=,
+no_cuda=False,
+num_train_epochs=1.0,
+optim=adamw_torch,
+optim_args=None,
+output_dir=test,
+overwrite_output_dir=False,
+past_index=-1,
+per_device_eval_batch_size=8,
+per_device_train_batch_size=8,
+prediction_loss_only=False,
+push_to_hub=False,
+push_to_hub_model_id=None,
+push_to_hub_organization=None,
+push_to_hub_token=<PUSH_TO_HUB_TOKEN>,
+ray_scope=last,
+remove_unused_columns=True,
+report_to=['wandb'],
+resume_from_checkpoint=None,
+run_name=test,
+save_on_each_node=False,
+save_safetensors=False,
+save_steps=500,
+save_strategy=no,
+save_total_limit=None,
+seed=42,
+sharded_ddp=[],
+skip_memory_metrics=True,
+tf32=None,
+torch_compile=False,
+torch_compile_backend=None,
+torch_compile_mode=None,
+torchdynamo=None,
+tpu_metrics_debug=False,
+tpu_num_cores=None,
+use_cpu=False,
+use_ipex=False,
+use_legacy_prediction_loop=False,
+use_mps_device=False,
+warmup_ratio=0.1,
+warmup_steps=0,
+weight_decay=0.0,
+)
+/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/huggingface_hub/file_download.py:896: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+You are using the default legacy behaviour of the <class 'transformers.models.llama.tokenization_llama.LlamaTokenizer'>. This is expected, and simply means that the `legacy` (previous) behavior will be used so nothing changes for you. If you want to use the new behaviour, set `legacy=False`. This should only be set if you understand what it means, and thouroughly read the reason why this was added as explained in https://github.com/huggingface/transformers/pull/24565
+ModelArguments(model_name_or_path='lmsys/vicuna-7b-v1.3', load_in_4bit=False, load_in_8bit=False)
+DataArguments(data_path='ShareGPT_Vicuna_unfiltered/ShareGPT_V4.3_unfiltered_cleaned_split.json', eval_data_path=None, lazy_preprocess=True)
+TrainingArguments(
+_n_gpu=1,
+adafactor=False,
+adam_beta1=0.9,
+adam_beta2=0.999,
+adam_epsilon=1e-08,
+auto_find_batch_size=False,
+bf16=False,
+bf16_full_eval=False,
+cache_dir=None,
+data_seed=None,
+dataloader_drop_last=False,
+dataloader_num_workers=0,
+dataloader_pin_memory=True,
+ddp_backend=None,
+ddp_broadcast_buffers=None,
+ddp_bucket_cap_mb=None,
+ddp_find_unused_parameters=None,
+ddp_timeout=1800,
+debug=[],
+deepspeed=None,
+disable_tqdm=False,
+dispatch_batches=None,
+do_eval=False,
+do_predict=False,
+do_train=False,
+eval_accumulation_steps=None,
+eval_delay=0,
+eval_steps=None,
+evaluation_strategy=no,
+fp16=True,
+fp16_backend=auto,
+fp16_full_eval=False,
+fp16_opt_level=O1,
+fsdp=[],
+fsdp_config={'min_num_params': 0, 'xla': False, 'xla_fsdp_grad_ckpt': False},
+fsdp_min_num_params=0,
+fsdp_transformer_layer_cls_to_wrap=None,
+full_determinism=False,
+gradient_accumulation_steps=4,
+gradient_checkpointing=False,
+greater_is_better=None,
+group_by_length=False,
+half_precision_backend=auto,
+hub_always_push=False,
+hub_model_id=None,
+hub_private_repo=False,
+hub_strategy=every_save,
+hub_token=<HUB_TOKEN>,
+ignore_data_skip=False,
+include_inputs_for_metrics=False,
+include_tokens_per_second=False,
+jit_mode_eval=False,
+label_names=None,
+label_smoothing_factor=0.0,
+learning_rate=0.001,
+length_column_name=length,
+load_best_model_at_end=False,
+local_rank=3,
+log_level=passive,
+log_level_replica=warning,
+log_on_each_node=True,
+logging_dir=test/runs/Apr16_16-07-42_v020.ib.bridges2.psc.edu,
+logging_first_step=False,
+logging_nan_inf_filter=True,
+logging_steps=1.0,
+logging_strategy=steps,
+lr_scheduler_type=cosine,
+max_grad_norm=1.0,
+max_steps=-1,
+medusa_num_heads=3,
+medusa_num_layers=1,
+metric_for_best_model=None,
+model_max_length=2048,
+mp_parameters=,
+no_cuda=False,
+num_train_epochs=1.0,
+optim=adamw_torch,
+optim_args=None,
+output_dir=test,
+overwrite_output_dir=False,
+past_index=-1,
+per_device_eval_batch_size=8,
+per_device_train_batch_size=8,
+prediction_loss_only=False,
+push_to_hub=False,
+push_to_hub_model_id=None,
+push_to_hub_organization=None,
+push_to_hub_token=<PUSH_TO_HUB_TOKEN>,
+ray_scope=last,
+remove_unused_columns=True,
+report_to=['wandb'],
+resume_from_checkpoint=None,
+run_name=test,
+save_on_each_node=False,
+save_safetensors=False,
+save_steps=500,
+save_strategy=no,
+save_total_limit=None,
+seed=42,
+sharded_ddp=[],
+skip_memory_metrics=True,
+tf32=None,
+torch_compile=False,
+torch_compile_backend=None,
+torch_compile_mode=None,
+torchdynamo=None,
+tpu_metrics_debug=False,
+tpu_num_cores=None,
+use_cpu=False,
+use_ipex=False,
+use_legacy_prediction_loop=False,
+use_mps_device=False,
+warmup_ratio=0.1,
+warmup_steps=0,
+weight_decay=0.0,
+)
+/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/huggingface_hub/file_download.py:896: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+ModelArguments(model_name_or_path='lmsys/vicuna-7b-v1.3', load_in_4bit=False, load_in_8bit=False)
+DataArguments(data_path='ShareGPT_Vicuna_unfiltered/ShareGPT_V4.3_unfiltered_cleaned_split.json', eval_data_path=None, lazy_preprocess=True)
+ModelArguments(model_name_or_path='lmsys/vicuna-7b-v1.3', load_in_4bit=False, load_in_8bit=False)
+DataArguments(data_path='ShareGPT_Vicuna_unfiltered/ShareGPT_V4.3_unfiltered_cleaned_split.json', eval_data_path=None, lazy_preprocess=True)
+TrainingArguments(
+_n_gpu=1,
+adafactor=False,
+adam_beta1=0.9,
+adam_beta2=0.999,
+adam_epsilon=1e-08,
+auto_find_batch_size=False,
+bf16=False,
+bf16_full_eval=False,
+cache_dir=None,
+data_seed=None,
+dataloader_drop_last=False,
+dataloader_num_workers=0,
+dataloader_pin_memory=True,
+ddp_backend=None,
+ddp_broadcast_buffers=None,
+ddp_bucket_cap_mb=None,
+ddp_find_unused_parameters=None,
+ddp_timeout=1800,
+debug=[],
+deepspeed=None,
+disable_tqdm=False,
+dispatch_batches=None,
+do_eval=False,
+do_predict=False,
+do_train=False,
+eval_accumulation_steps=None,
+eval_delay=0,
+eval_steps=None,
+evaluation_strategy=no,
+fp16=True,
+fp16_backend=auto,
+fp16_full_eval=False,
+fp16_opt_level=O1,
+fsdp=[],
+fsdp_config={'min_num_params': 0, 'xla': False, 'xla_fsdp_grad_ckpt': False},
+fsdp_min_num_params=0,
+fsdp_transformer_layer_cls_to_wrap=None,
+full_determinism=False,
+gradient_accumulation_steps=4,
+gradient_checkpointing=False,
+greater_is_better=None,
+group_by_length=False,
+half_precision_backend=auto,
+hub_always_push=False,
+hub_model_id=None,
+hub_private_repo=False,
+hub_strategy=every_save,
+hub_token=<HUB_TOKEN>,
+ignore_data_skip=False,
+include_inputs_for_metrics=False,
+include_tokens_per_second=False,
+jit_mode_eval=False,
+label_names=None,
+label_smoothing_factor=0.0,
+learning_rate=0.001,
+length_column_name=length,
+load_best_model_at_end=False,
+local_rank=1,
+log_level=passive,
+log_level_replica=warning,
+log_on_each_node=True,
+logging_dir=test/runs/Apr16_16-07-42_v020.ib.bridges2.psc.edu,
+logging_first_step=False,
+logging_nan_inf_filter=True,
+logging_steps=1.0,
+logging_strategy=steps,
+lr_scheduler_type=cosine,
+max_grad_norm=1.0,
+max_steps=-1,
+medusa_num_heads=3,
+medusa_num_layers=1,
+metric_for_best_model=None,
+model_max_length=2048,
+mp_parameters=,
+no_cuda=False,
+num_train_epochs=1.0,
+optim=adamw_torch,
+optim_args=None,
+output_dir=test,
+overwrite_output_dir=False,
+past_index=-1,
+per_device_eval_batch_size=8,
+per_device_train_batch_size=8,
+prediction_loss_only=False,
+push_to_hub=False,
+push_to_hub_model_id=None,
+push_to_hub_organization=None,
+push_to_hub_token=<PUSH_TO_HUB_TOKEN>,
+ray_scope=last,
+remove_unused_columns=True,
+report_to=['wandb'],
+resume_from_checkpoint=None,
+run_name=test,
+save_on_each_node=False,
+save_safetensors=False,
+save_steps=500,
+save_strategy=no,
+save_total_limit=None,
+seed=42,
+sharded_ddp=[],
+skip_memory_metrics=True,
+tf32=None,
+torch_compile=False,
+torch_compile_backend=None,
+torch_compile_mode=None,
+torchdynamo=None,
+tpu_metrics_debug=False,
+tpu_num_cores=None,
+use_cpu=False,
+use_ipex=False,
+use_legacy_prediction_loop=False,
+use_mps_device=False,
+warmup_ratio=0.1,
+warmup_steps=0,
+weight_decay=0.0,
+)
+TrainingArguments(
+_n_gpu=1,
+adafactor=False,
+adam_beta1=0.9,
+adam_beta2=0.999,
+adam_epsilon=1e-08,
+auto_find_batch_size=False,
+bf16=False,
+bf16_full_eval=False,
+cache_dir=None,
+data_seed=None,
+dataloader_drop_last=False,
+dataloader_num_workers=0,
+dataloader_pin_memory=True,
+ddp_backend=None,
+ddp_broadcast_buffers=None,
+ddp_bucket_cap_mb=None,
+ddp_find_unused_parameters=None,
+ddp_timeout=1800,
+debug=[],
+deepspeed=None,
+disable_tqdm=False,
+dispatch_batches=None,
+do_eval=False,
+do_predict=False,
+do_train=False,
+eval_accumulation_steps=None,
+eval_delay=0,
+eval_steps=None,
+evaluation_strategy=no,
+fp16=True,
+fp16_backend=auto,
+fp16_full_eval=False,
+fp16_opt_level=O1,
+fsdp=[],
+fsdp_config={'min_num_params': 0, 'xla': False, 'xla_fsdp_grad_ckpt': False},
+fsdp_min_num_params=0,
+fsdp_transformer_layer_cls_to_wrap=None,
+full_determinism=False,
+gradient_accumulation_steps=4,
+gradient_checkpointing=False,
+greater_is_better=None,
+group_by_length=False,
+half_precision_backend=auto,
+hub_always_push=False,
+hub_model_id=None,
+hub_private_repo=False,
+hub_strategy=every_save,
+hub_token=<HUB_TOKEN>,
+ignore_data_skip=False,
+include_inputs_for_metrics=False,
+include_tokens_per_second=False,
+jit_mode_eval=False,
+label_names=None,
+label_smoothing_factor=0.0,
+learning_rate=0.001,
+length_column_name=length,
+load_best_model_at_end=False,
+local_rank=2,
+log_level=passive,
+log_level_replica=warning,
+log_on_each_node=True,
+logging_dir=test/runs/Apr16_16-07-42_v020.ib.bridges2.psc.edu,
+logging_first_step=False,
+logging_nan_inf_filter=True,
+logging_steps=1.0,
+logging_strategy=steps,
+lr_scheduler_type=cosine,
+max_grad_norm=1.0,
+max_steps=-1,
+medusa_num_heads=3,
+medusa_num_layers=1,
+metric_for_best_model=None,
+model_max_length=2048,
+mp_parameters=,
+no_cuda=False,
+num_train_epochs=1.0,
+optim=adamw_torch,
+optim_args=None,
+output_dir=test,
+overwrite_output_dir=False,
+past_index=-1,
+per_device_eval_batch_size=8,
+per_device_train_batch_size=8,
+prediction_loss_only=False,
+push_to_hub=False,
+push_to_hub_model_id=None,
+push_to_hub_organization=None,
+push_to_hub_token=<PUSH_TO_HUB_TOKEN>,
+ray_scope=last,
+remove_unused_columns=True,
+report_to=['wandb'],
+resume_from_checkpoint=None,
+run_name=test,
+save_on_each_node=False,
+save_safetensors=False,
+save_steps=500,
+save_strategy=no,
+save_total_limit=None,
+seed=42,
+sharded_ddp=[],
+skip_memory_metrics=True,
+tf32=None,
+torch_compile=False,
+torch_compile_backend=None,
+torch_compile_mode=None,
+torchdynamo=None,
+tpu_metrics_debug=False,
+tpu_num_cores=None,
+use_cpu=False,
+use_ipex=False,
+use_legacy_prediction_loop=False,
+use_mps_device=False,
+warmup_ratio=0.1,
+warmup_steps=0,
+weight_decay=0.0,
+)
+/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/huggingface_hub/file_download.py:896: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/huggingface_hub/file_download.py:896: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+You are using the default legacy behaviour of the <class 'transformers.models.llama.tokenization_llama.LlamaTokenizer'>. This is expected, and simply means that the `legacy` (previous) behavior will be used so nothing changes for you. If you want to use the new behaviour, set `legacy=False`. This should only be set if you understand what it means, and thouroughly read the reason why this was added as explained in https://github.com/huggingface/transformers/pull/24565
+You are using the default legacy behaviour of the <class 'transformers.models.llama.tokenization_llama.LlamaTokenizer'>. This is expected, and simply means that the `legacy` (previous) behavior will be used so nothing changes for you. If you want to use the new behaviour, set `legacy=False`. This should only be set if you understand what it means, and thouroughly read the reason why this was added as explained in https://github.com/huggingface/transformers/pull/24565
+You are using the default legacy behaviour of the <class 'transformers.models.llama.tokenization_llama.LlamaTokenizer'>. This is expected, and simply means that the `legacy` (previous) behavior will be used so nothing changes for you. If you want to use the new behaviour, set `legacy=False`. This should only be set if you understand what it means, and thouroughly read the reason why this was added as explained in https://github.com/huggingface/transformers/pull/24565
+{'input_ids': [[1, 910, 338, 263, 1243], [1, 16723, 2, 2, 2]], 'attention_mask': [[1, 1, 1, 1, 1], [1, 1, 0, 0, 0]]}
+[1, 518, 25580, 29962, 3532, 14816, 29903, 6778, 13, 3492, 526, 263, 8444, 29892, 3390, 1319, 322, 15993, 20255, 29889, 29849, 1234, 408, 1371, 3730, 408, 1950, 29892, 1550, 1641, 9109, 29889, 3575, 6089, 881, 451, 3160, 738, 10311, 1319, 29892, 443, 621, 936, 29892, 11021, 391, 29892, 7916, 391, 29892, 304, 27375, 29892, 18215, 29892, 470, 27302, 2793, 29889, 3529, 9801, 393, 596, 20890, 526, 5374, 635, 443, 5365, 1463, 322, 6374, 297, 5469, 29889, 13, 13, 3644, 263, 1139, 947, 451, 1207, 738, 4060, 29892, 470, 338, 451, 2114, 1474, 16165, 261, 296, 29892, 5649, 2020, 2012, 310, 22862, 1554, 451, 1959, 29889, 960, 366, 1016, 29915, 29873, 1073, 278, 1234, 304, 263, 1139, 29892, 3113, 1016, 29915, 29873, 6232, 2089, 2472, 29889, 13, 29966, 829, 14816, 29903, 6778, 13, 13, 4013, 338, 263, 1243, 518, 29914, 25580, 29962]
+{'input_ids': [[1, 910, 338, 263, 1243], [1, 16723, 2, 2, 2]], 'attention_mask': [[1, 1, 1, 1, 1], [1, 1, 0, 0, 0]]}
+{'input_ids': [[1, 910, 338, 263, 1243], [1, 16723, 2, 2, 2]], 'attention_mask': [[1, 1, 1, 1, 1], [1, 1, 0, 0, 0]]}
+[1, 518, 25580, 29962, 3532, 14816, 29903, 6778, 13, 3492, 526, 263, 8444, 29892, 3390, 1319, 322, 15993, 20255, 29889, 29849, 1234, 408, 1371, 3730, 408, 1950, 29892, 1550, 1641, 9109, 29889, 3575, 6089, 881, 451, 3160, 738, 10311, 1319, 29892, 443, 621, 936, 29892, 11021, 391, 29892, 7916, 391, 29892, 304, 27375, 29892, 18215, 29892, 470, 27302, 2793, 29889, 3529, 9801, 393, 596, 20890, 526, 5374, 635, 443, 5365, 1463, 322, 6374, 297, 5469, 29889, 13, 13, 3644, 263, 1139, 947, 451, 1207, 738, 4060, 29892, 470, 338, 451, 2114, 1474, 16165, 261, 296, 29892, 5649, 2020, 2012, 310, 22862, 1554, 451, 1959, 29889, 960, 366, 1016, 29915, 29873, 1073, 278, 1234, 304, 263, 1139, 29892, 3113, 1016, 29915, 29873, 6232, 2089, 2472, 29889, 13, 29966, 829, 14816, 29903, 6778, 13, 13, 4013, 338, 263, 1243, 518, 29914, 25580, 29962]
+[1, 518, 25580, 29962, 3532, 14816, 29903, 6778, 13, 3492, 526, 263, 8444, 29892, 3390, 1319, 322, 15993, 20255, 29889, 29849, 1234, 408, 1371, 3730, 408, 1950, 29892, 1550, 1641, 9109, 29889, 3575, 6089, 881, 451, 3160, 738, 10311, 1319, 29892, 443, 621, 936, 29892, 11021, 391, 29892, 7916, 391, 29892, 304, 27375, 29892, 18215, 29892, 470, 27302, 2793, 29889, 3529, 9801, 393, 596, 20890, 526, 5374, 635, 443, 5365, 1463, 322, 6374, 297, 5469, 29889, 13, 13, 3644, 263, 1139, 947, 451, 1207, 738, 4060, 29892, 470, 338, 451, 2114, 1474, 16165, 261, 296, 29892, 5649, 2020, 2012, 310, 22862, 1554, 451, 1959, 29889, 960, 366, 1016, 29915, 29873, 1073, 278, 1234, 304, 263, 1139, 29892, 3113, 1016, 29915, 29873, 6232, 2089, 2472, 29889, 13, 29966, 829, 14816, 29903, 6778, 13, 13, 4013, 338, 263, 1243, 518, 29914, 25580, 29962]
+{'input_ids': [[1, 910, 338, 263, 1243], [1, 16723, 2, 2, 2]], 'attention_mask': [[1, 1, 1, 1, 1], [1, 1, 0, 0, 0]]}
+[1, 518, 25580, 29962, 3532, 14816, 29903, 6778, 13, 3492, 526, 263, 8444, 29892, 3390, 1319, 322, 15993, 20255, 29889, 29849, 1234, 408, 1371, 3730, 408, 1950, 29892, 1550, 1641, 9109, 29889, 3575, 6089, 881, 451, 3160, 738, 10311, 1319, 29892, 443, 621, 936, 29892, 11021, 391, 29892, 7916, 391, 29892, 304, 27375, 29892, 18215, 29892, 470, 27302, 2793, 29889, 3529, 9801, 393, 596, 20890, 526, 5374, 635, 443, 5365, 1463, 322, 6374, 297, 5469, 29889, 13, 13, 3644, 263, 1139, 947, 451, 1207, 738, 4060, 29892, 470, 338, 451, 2114, 1474, 16165, 261, 296, 29892, 5649, 2020, 2012, 310, 22862, 1554, 451, 1959, 29889, 960, 366, 1016, 29915, 29873, 1073, 278, 1234, 304, 263, 1139, 29892, 3113, 1016, 29915, 29873, 6232, 2089, 2472, 29889, 13, 29966, 829, 14816, 29903, 6778, 13, 13, 4013, 338, 263, 1243, 518, 29914, 25580, 29962]
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:13<00:13, 13.31s/it]Loading checkpoint shards:  50%|█████     | 1/2 [00:12<00:12, 12.30s/it]Loading checkpoint shards:  50%|█████     | 1/2 [00:12<00:12, 12.30s/it]Loading checkpoint shards:  50%|█████     | 1/2 [00:12<00:12, 12.30s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:17<00:00,  8.21s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:17<00:00,  8.98s/it]
+Loading checkpoint shards: 100%|██████████| 2/2 [00:16<00:00,  7.80s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:16<00:00,  8.47s/it]
+Loading checkpoint shards: 100%|██████████| 2/2 [00:16<00:00,  7.80s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:16<00:00,  8.48s/it]
+Loading checkpoint shards: 100%|██████████| 2/2 [00:16<00:00,  7.79s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:16<00:00,  8.47s/it]
+Loading data...
+/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/accelerate/accelerator.py:432: FutureWarning: Passing the following arguments to `Accelerator` is deprecated and will be removed in version 1.0 of Accelerate: dict_keys(['dispatch_batches']). Please pass an `accelerate.DataLoaderConfiguration` instead: 
+dataloader_config = DataLoaderConfiguration(dispatch_batches=None)
+  warnings.warn(
+/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/accelerate/accelerator.py:463: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  self.scaler = torch.cuda.amp.GradScaler(**kwargs)
+/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/accelerate/accelerator.py:432: FutureWarning: Passing the following arguments to `Accelerator` is deprecated and will be removed in version 1.0 of Accelerate: dict_keys(['dispatch_batches']). Please pass an `accelerate.DataLoaderConfiguration` instead: 
+dataloader_config = DataLoaderConfiguration(dispatch_batches=None)
+  warnings.warn(
+/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/accelerate/accelerator.py:463: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  self.scaler = torch.cuda.amp.GradScaler(**kwargs)
+/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/accelerate/accelerator.py:432: FutureWarning: Passing the following arguments to `Accelerator` is deprecated and will be removed in version 1.0 of Accelerate: dict_keys(['dispatch_batches']). Please pass an `accelerate.DataLoaderConfiguration` instead: 
+dataloader_config = DataLoaderConfiguration(dispatch_batches=None)
+  warnings.warn(
+/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/accelerate/accelerator.py:463: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  self.scaler = torch.cuda.amp.GradScaler(**kwargs)
+Formatting inputs...Skip in lazy mode
+/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/accelerate/accelerator.py:432: FutureWarning: Passing the following arguments to `Accelerator` is deprecated and will be removed in version 1.0 of Accelerate: dict_keys(['dispatch_batches']). Please pass an `accelerate.DataLoaderConfiguration` instead: 
+dataloader_config = DataLoaderConfiguration(dispatch_batches=None)
+  warnings.warn(
+/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/accelerate/accelerator.py:463: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  self.scaler = torch.cuda.amp.GradScaler(**kwargs)
+Detected kernel version 4.18.0, which is below the recommended minimum of 5.5.0; this can cause the process to hang. It is recommended to upgrade the kernel to the minimum version or higher.
+[rank3]: Traceback (most recent call last):
+[rank3]:   File "/jet/home/dduenas/15442-project/Medusa/medusa/train/train_legacy.py", line 462, in <module>
+[rank3]:     train()
+[rank3]:   File "/jet/home/dduenas/15442-project/Medusa/medusa/train/train_legacy.py", line 437, in train
+[rank3]:     trainer.train()
+[rank3]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/trainer.py", line 1591, in train
+[rank3]:     return inner_training_loop(
+[rank3]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/trainer.py", line 1870, in _inner_training_loop
+[rank3]:     for step, inputs in enumerate(epoch_iterator):
+[rank3]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/accelerate/data_loader.py", line 452, in __iter__
+[rank3]:     current_batch = next(dataloader_iter)
+[rank3]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/torch/utils/data/dataloader.py", line 708, in __next__
+[rank3]:     data = self._next_data()
+[rank3]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/torch/utils/data/dataloader.py", line 764, in _next_data
+[rank3]:     data = self._dataset_fetcher.fetch(index)  # may raise StopIteration
+[rank3]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/torch/utils/data/_utils/fetch.py", line 52, in fetch
+[rank3]:     data = [self.dataset[idx] for idx in possibly_batched_index]
+[rank3]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/torch/utils/data/_utils/fetch.py", line 52, in <listcomp>
+[rank3]:     data = [self.dataset[idx] for idx in possibly_batched_index]
+[rank3]:   File "/jet/home/dduenas/15442-project/Medusa/medusa/train/train_legacy.py", line 311, in __getitem__
+[rank3]:     ret = preprocess_qwen([self.raw_data[i]["messages"]], self.tokenizer, 4096)
+[rank3]: KeyError: 'messages'
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/jet/home/dduenas/15442-project/Medusa/medusa/train/train_legacy.py", line 462, in <module>
+[rank1]:     train()
+[rank1]:   File "/jet/home/dduenas/15442-project/Medusa/medusa/train/train_legacy.py", line 437, in train
+[rank1]:     trainer.train()
+[rank1]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/trainer.py", line 1591, in train
+[rank1]:     return inner_training_loop(
+[rank1]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/trainer.py", line 1870, in _inner_training_loop
+[rank1]:     for step, inputs in enumerate(epoch_iterator):
+[rank1]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/accelerate/data_loader.py", line 452, in __iter__
+[rank1]:     current_batch = next(dataloader_iter)
+[rank1]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/torch/utils/data/dataloader.py", line 708, in __next__
+[rank1]:     data = self._next_data()
+[rank1]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/torch/utils/data/dataloader.py", line 764, in _next_data
+[rank1]:     data = self._dataset_fetcher.fetch(index)  # may raise StopIteration
+[rank1]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/torch/utils/data/_utils/fetch.py", line 52, in fetch
+[rank1]:     data = [self.dataset[idx] for idx in possibly_batched_index]
+[rank1]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/torch/utils/data/_utils/fetch.py", line 52, in <listcomp>
+[rank1]:     data = [self.dataset[idx] for idx in possibly_batched_index]
+[rank1]:   File "/jet/home/dduenas/15442-project/Medusa/medusa/train/train_legacy.py", line 311, in __getitem__
+[rank1]:     ret = preprocess_qwen([self.raw_data[i]["messages"]], self.tokenizer, 4096)
+[rank1]: KeyError: 'messages'
+[rank2]: Traceback (most recent call last):
+[rank2]:   File "/jet/home/dduenas/15442-project/Medusa/medusa/train/train_legacy.py", line 462, in <module>
+[rank2]:     train()
+[rank2]:   File "/jet/home/dduenas/15442-project/Medusa/medusa/train/train_legacy.py", line 437, in train
+[rank2]:     trainer.train()
+[rank2]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/trainer.py", line 1591, in train
+[rank2]:     return inner_training_loop(
+[rank2]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/trainer.py", line 1870, in _inner_training_loop
+[rank2]:     for step, inputs in enumerate(epoch_iterator):
+[rank2]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/accelerate/data_loader.py", line 452, in __iter__
+[rank2]:     current_batch = next(dataloader_iter)
+[rank2]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/torch/utils/data/dataloader.py", line 708, in __next__
+[rank2]:     data = self._next_data()
+[rank2]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/torch/utils/data/dataloader.py", line 764, in _next_data
+[rank2]:     data = self._dataset_fetcher.fetch(index)  # may raise StopIteration
+[rank2]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/torch/utils/data/_utils/fetch.py", line 52, in fetch
+[rank2]:     data = [self.dataset[idx] for idx in possibly_batched_index]
+[rank2]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/torch/utils/data/_utils/fetch.py", line 52, in <listcomp>
+[rank2]:     data = [self.dataset[idx] for idx in possibly_batched_index]
+[rank2]:   File "/jet/home/dduenas/15442-project/Medusa/medusa/train/train_legacy.py", line 311, in __getitem__
+[rank2]:     ret = preprocess_qwen([self.raw_data[i]["messages"]], self.tokenizer, 4096)
+[rank2]: KeyError: 'messages'
+wandb: Using wandb-core as the SDK backend.  Please refer to https://wandb.me/wandb-core for more information.
+wandb: ERROR api_key not configured (no-tty). call wandb.login(key=[your_api_key])
+Traceback (most recent call last):
+  File "/jet/home/dduenas/15442-project/Medusa/medusa/train/train_legacy.py", line 462, in <module>
+    train()
+  File "/jet/home/dduenas/15442-project/Medusa/medusa/train/train_legacy.py", line 437, in train
+    trainer.train()
+  File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/trainer.py", line 1591, in train
+    return inner_training_loop(
+  File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/trainer.py", line 1826, in _inner_training_loop
+    self.control = self.callback_handler.on_train_begin(args, self.state, self.control)
+  File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/trainer_callback.py", line 362, in on_train_begin
+    return self.call_event("on_train_begin", args, state, control)
+  File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/trainer_callback.py", line 406, in call_event
+    result = getattr(callback, event)(
+  File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/integrations/integration_utils.py", line 766, in on_train_begin
+    self.setup(args, state, model, **kwargs)
+  File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/integrations/integration_utils.py", line 740, in setup
+    self._wandb.init(
+  File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/wandb/sdk/wandb_init.py", line 1544, in init
+    wandb._sentry.reraise(e)
+  File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/wandb/analytics/sentry.py", line 156, in reraise
+    raise exc.with_traceback(sys.exc_info()[2])
+  File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/wandb/sdk/wandb_init.py", line 1478, in init
+    wi.maybe_login(init_settings)
+  File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/wandb/sdk/wandb_init.py", line 177, in maybe_login
+    wandb_login._login(
+  File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/wandb/sdk/wandb_login.py", line 305, in _login
+    key, key_status = wlogin.prompt_api_key()
+  File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/wandb/sdk/wandb_login.py", line 234, in prompt_api_key
+    raise UsageError("api_key not configured (no-tty). call " + directive)
+wandb.errors.errors.UsageError: api_key not configured (no-tty). call wandb.login(key=[your_api_key])
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/jet/home/dduenas/15442-project/Medusa/medusa/train/train_legacy.py", line 462, in <module>
+[rank0]:     train()
+[rank0]:   File "/jet/home/dduenas/15442-project/Medusa/medusa/train/train_legacy.py", line 437, in train
+[rank0]:     trainer.train()
+[rank0]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/trainer.py", line 1591, in train
+[rank0]:     return inner_training_loop(
+[rank0]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/trainer.py", line 1826, in _inner_training_loop
+[rank0]:     self.control = self.callback_handler.on_train_begin(args, self.state, self.control)
+[rank0]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/trainer_callback.py", line 362, in on_train_begin
+[rank0]:     return self.call_event("on_train_begin", args, state, control)
+[rank0]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/trainer_callback.py", line 406, in call_event
+[rank0]:     result = getattr(callback, event)(
+[rank0]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/integrations/integration_utils.py", line 766, in on_train_begin
+[rank0]:     self.setup(args, state, model, **kwargs)
+[rank0]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/transformers/integrations/integration_utils.py", line 740, in setup
+[rank0]:     self._wandb.init(
+[rank0]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/wandb/sdk/wandb_init.py", line 1544, in init
+[rank0]:     wandb._sentry.reraise(e)
+[rank0]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/wandb/analytics/sentry.py", line 156, in reraise
+[rank0]:     raise exc.with_traceback(sys.exc_info()[2])
+[rank0]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/wandb/sdk/wandb_init.py", line 1478, in init
+[rank0]:     wi.maybe_login(init_settings)
+[rank0]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/wandb/sdk/wandb_init.py", line 177, in maybe_login
+[rank0]:     wandb_login._login(
+[rank0]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/wandb/sdk/wandb_login.py", line 305, in _login
+[rank0]:     key, key_status = wlogin.prompt_api_key()
+[rank0]:   File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/wandb/sdk/wandb_login.py", line 234, in prompt_api_key
+[rank0]:     raise UsageError("api_key not configured (no-tty). call " + directive)
+[rank0]: wandb.errors.errors.UsageError: api_key not configured (no-tty). call wandb.login(key=[your_api_key])
+W0416 16:09:05.828000 100670 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 100711 closing signal SIGTERM
+W0416 16:09:05.828000 100670 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 100714 closing signal SIGTERM
+E0416 16:09:06.193000 100670 site-packages/torch/distributed/elastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 1 (pid: 100712) of binary: /jet/home/dduenas/miniconda3/envs/py310/bin/python
+Traceback (most recent call last):
+  File "/jet/home/dduenas/miniconda3/envs/py310/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+  File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
+    return f(*args, **kwargs)
+  File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/torch/distributed/run.py", line 918, in main
+    run(args)
+  File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/torch/distributed/run.py", line 909, in run
+    elastic_launch(
+  File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/jet/home/dduenas/miniconda3/envs/py310/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+medusa/train/train_legacy.py FAILED
+------------------------------------------------------------
+Failures:
+[1]:
+  time      : 2025-04-16_16:09:05
+  host      : v020.pvt.bridges2.psc.edu
+  rank      : 2 (local_rank: 2)
+  exitcode  : 1 (pid: 100713)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2025-04-16_16:09:05
+  host      : v020.pvt.bridges2.psc.edu
+  rank      : 1 (local_rank: 1)
+  exitcode  : 1 (pid: 100712)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

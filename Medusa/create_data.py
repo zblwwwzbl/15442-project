@@ -1,6 +1,6 @@
 import typer
 import json
-from transformers import Conversation
+# from transformers import Conversation
 from typing_extensions import Annotated
 import httpx
 import tqdm
@@ -8,6 +8,12 @@ import asyncio
 
 app = typer.Typer()
 
+class Conversation:
+    def __init__(self):
+        self.messages = []
+
+    def add_message(self, message):
+        self.messages.append(message)
 
 client = httpx.AsyncClient(timeout=None)
 
@@ -66,7 +72,10 @@ def main(
             future = recreate_conversation(conversation, sem, url)
             futures.append(future)
 
-        recreated_conversations = await tqdm.asyncio.tqdm.gather(*futures)
+        recreated_conversations = []
+        for future in tqdm.tqdm(asyncio.as_completed(futures), total=len(futures)):
+            result = await future
+            recreated_conversations.append(result)
 
         with open(output_filename, "w") as f:
             json.dump(recreated_conversations, f, indent=4)
