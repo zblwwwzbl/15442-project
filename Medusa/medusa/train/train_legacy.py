@@ -38,7 +38,7 @@ from fastchat.model.model_adapter import get_conversation_template
 from torch.nn import CrossEntropyLoss
 from torch.nn import functional as F
 import os
-from medusa.model.medusa_model import MedusaModel, MedusaConfig
+from medusa.model.medusa_model_legacy import MedusaModel, MedusaConfig
 
 IGNORE_TOKEN_ID = LabelSmoother.ignore_index
 
@@ -629,6 +629,10 @@ def training_run(n_epochs, tuning_args):
     example = data_module["train_dataset"][0]
     input_ids = example["input_ids"].unsqueeze(0)
     attention_mask = example["attention_mask"].unsqueeze(0)
+
+    device = next(model.parameters()).device
+    input_ids = input_ids.to(device)
+    attention_mask = attention_mask.to(device)
 
     # Generation arguments for Medusa speculative decoding
     gen_kwargs = {

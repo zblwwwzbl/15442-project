@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from .modeling_llama_kv import LlamaForCausalLM as KVLlamaForCausalLM
-from .modeling_mistral_kv import MistralForCausalLM as KVMistralForCausalLM
+# from .modeling_llama_kv import LlamaForCausalLM as KVLlamaForCausalLM
+# from .modeling_mistral_kv import MistralForCausalLM as KVMistralForCausalLM
 # import transformers
 
 # # monkey patch
@@ -16,6 +16,7 @@ from transformers import AutoTokenizer, AutoConfig
 import os
 from huggingface_hub import hf_hub_download
 import warnings
+# from transformers.models.llama.modeling_llama import LlamaCache
 
 class MedusaConfig(PretrainedConfig):
     """
@@ -191,6 +192,9 @@ class MedusaModelABC(nn.Module):
             torch.Tensor: A tensor containing predictions from all Medusa heads.
             (Optional) Original predictions from the base model's LM head.
         """
+        # if isinstance(past_key_values, tuple):
+        #     past_key_values = LlamaCache(past_key_values)
+        print("HERE")
         if not medusa_forward:
             return super().forward(
                 input_ids=input_ids,
@@ -267,6 +271,7 @@ class MedusaModelABC(nn.Module):
         assert input_ids.shape[0] == 1, "Only support batch size 1 for now!!"
         # Avoid modifying the input_ids in-place
         input_ids = input_ids.clone()
+        print("HI")
 
         # Cache medusa buffers (the fixed patterns for tree attention)
         if medusa_choices is None:
@@ -369,11 +374,11 @@ class MedusaModelABC(nn.Module):
                 break
 
 
-class MedusaModelLlama(MedusaModelABC, KVLlamaForCausalLM):
-    pass
+# class MedusaModelLlama(MedusaModelABC, KVLlamaForCausalLM):
+#     pass
 
-class MedusaModelMistral(MedusaModelABC, KVMistralForCausalLM):
-    pass
+# class MedusaModelMistral(MedusaModelABC, KVMistralForCausalLM):
+#     pass
 
 
 class MedusaModel():

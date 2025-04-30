@@ -171,6 +171,7 @@ class MedusaModel(nn.Module):
         past_key_values=None,
         output_orig=False,
         position_ids=None,
+        **kwargs,
     ):
         """Forward pass of the MedusaModel.
 
@@ -186,6 +187,23 @@ class MedusaModel(nn.Module):
             torch.Tensor: A tensor containing predictions from all Medusa heads.
             (Optional) Original predictions from the base model's LM head.
         """
+        # Wrap past_key_values in a Cache subclass that implements get_seq_length
+        try:
+            from transformers.models.llama.modeling_llama import Cache
+        except ImportError:
+            Cache = None
+
+        if past_key_values is not None and Cache is not None and not isinstance(past_key_values, Cache):
+            class _CacheWrapper(Cache):
+                def __init__(self, past_kv):
+                    super().__init__()
+                    self.past_key_values = past_kv
+
+                def get_seq_length(self):
+                    # Sequence length is the third dimension of the key tensor
+                    return self.past_key_values[0][0].shape[2]
+
+            past_key_values = _CacheWrapper(past_key_values)
         with torch.no_grad():
             # Pass input through the base model
             outputs = self.base_model.model(
