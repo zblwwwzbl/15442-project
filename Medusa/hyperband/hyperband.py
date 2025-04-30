@@ -51,6 +51,7 @@ class Hyperband:
 				
 				n_configs = n * self.eta ** ( -i )
 				n_iterations = r * self.eta ** ( i )
+				n_epochs = n_iterations / 68623
 				
 				print "\n*** {} configurations x {:.1f} iterations each".format( 
 					n_configs, n_iterations )
@@ -69,7 +70,7 @@ class Hyperband:
 					if dry_run:
 						result = { 'loss': random(), 'log_loss': random(), 'auc': random()}
 					else:
-						result = self.try_params( n_iterations, t )		# <---
+						result = self.try_params( n_epochs, t )		# <---
 						
 					assert( type( result ) == dict )
 					assert( 'loss' in result )
