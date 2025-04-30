@@ -450,7 +450,7 @@ def train():
     # Save Medusa config
     medusa_config.save_pretrained(training_args.output_dir)
 
-    # Start trainner
+    # Start trainer
     trainer = CustomizedTrainer(
         model=medusa_lm_head, tokenizer=tokenizer, args=training_args, **data_module
     )
@@ -482,26 +482,25 @@ def train():
         )
     return
 
-def training_run(epochs, tuning_args):
+def training_run(n_epochs, tuning_args):
     global local_rank
 
-    model_args = {
+    model_args_dict = {
         "model_name_or_path": "lmsys/vicuna-7b-v1.3",
     }
 
-    data_args = {
+    data_args_dict = {
         "data_path":  "ShareGPT_Vicuna_unfiltered/ShareGPT_V4.3_unfiltered_cleaned_split.json",
     }
 
-    training_args = {
-        "bf16": False,
-        "fp16": True,
+    training_args_dict = {
+        "bf16": True,
+        "fp16": False,
         "output_dir": "test",
-        "num_train_epochs": epochs,
-        "per_device_train_batch_size": 8,
-        "per_device_eval_batch_size": 8,
+        "num_train_epochs": n_epochs,
+        "per_device_train_batch_size": 2,
+        "per_device_eval_batch_size": 2,
         "gradient_accumulation_steps": 4,
-        "evaluation_strategy": "no",
         "save_strategy": "no",
         "learning_rate": 1e-3,
         "weight_decay": 0.0,
@@ -509,15 +508,12 @@ def training_run(epochs, tuning_args):
         "lr_scheduler_type": "cosine",
         "logging_steps": 1,
         "model_max_length": 2048,
-        "lazy_preprocess": True,
         "medusa_num_heads": tuning_args["medusa_num_heads"],
         "medusa_num_layers": tuning_args["medusa_num_layers"],
     }
-
-    print("Report to: ", training_args.report_to)
-
-    local_rank = training_args.local_rank
-
+    model_args = ModelArguments(**model_args_dict)
+    data_args = DataArguments(**data_args_dict)
+    training_args = TrainingArguments(**training_args_dict)
     # Set RoPE scaling factor
     config = transformers.AutoConfig.from_pretrained(
         model_args.model_name_or_path,
@@ -561,15 +557,30 @@ def training_run(epochs, tuning_args):
     config_dir = training_args.output_dir
     config_file = os.path.join(config_dir, "config.json")
     if os.path.isdir(config_dir) and os.path.isfile(config_file):
-        # Load MedusaModel with saved config and head weights
-        medusa_lm_head = MedusaModel.from_pretrained(
-            medusa_head_name_or_path=config_dir,
-            base_model=model,
-            base_model_name_or_path=model_args.model_name_or_path,
-            torch_dtype=torch.float16,
+        # Load model and tokenizer
+        model = transformers.AutoModelForCausalLM.from_pretrained(
+            model_args.model_name_or_path,
+            config=config,
             cache_dir=training_args.cache_dir,
+            torch_dtype=torch.bfloat16,
+        )
+        
+        # Load MedusaModel with saved config and head weights
+        medusa_lm_head = MedusaModel(
+            model,
+            medusa_num_heads=training_args.medusa_num_heads,
+            medusa_num_layers=training_args.medusa_num_layers,
+            base_model_name_or_path=model_args.model_name_or_path,
         )
     else:
+        # Load model and tokenizer
+        model = transformers.AutoModelForCausalLM.from_pretrained(
+            model_args.model_name_or_path,
+            config=config,
+            cache_dir=training_args.cache_dir,
+            torch_dtype=torch.bfloat16,
+        )
+
         # First-time instantiation
         medusa_lm_head = MedusaModel(
             model,
@@ -577,13 +588,7 @@ def training_run(epochs, tuning_args):
             medusa_num_layers=training_args.medusa_num_layers,
             base_model_name_or_path=model_args.model_name_or_path,
         )
-        # Load model and tokenizer
-        model = transformers.AutoModelForCausalLM.from_pretrained(
-            model_args.model_name_or_path,
-            config=config,
-            cache_dir=training_args.cache_dir,
-            torch_dtype=torch.float16,
-        )
+       
 
     # Freeze the base model
     for param in model.base_model.parameters():
@@ -622,8 +627,8 @@ def training_run(epochs, tuning_args):
 
     # Select a single prompt from the train dataset
     example = data_module["train_dataset"][0]
-    input_ids = example["input_ids"].unsqueeze(0).to(model.device)
-    attention_mask = example["attention_mask"].unsqueeze(0).to(model.device)
+    input_ids = example["input_ids"].unsqueeze(0)
+    attention_mask = example["attention_mask"].unsqueeze(0)
 
     # Generation arguments for Medusa speculative decoding
     gen_kwargs = {

@@ -143,7 +143,7 @@ def initialize_medusa(input_ids, model, medusa_attn_mask, past_key_values):
     - logits (torch.Tensor): Original logits from the base model.
     """
     medusa_logits, outputs, logits = model(
-        input_ids, past_key_values=past_key_values, output_orig=True, medusa_forward=True
+        input_ids, past_key_values=None, output_orig=True, medusa_forward=True
     )
     model.base_model.model.medusa_mask = medusa_attn_mask
     return medusa_logits, logits
