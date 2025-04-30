@@ -187,9 +187,10 @@ def preprocess(
     prompts = []
     # # import pdb; pdb.set_trace()
     for i, conversation in enumerate(sources):
+        # print("Conversation", conversation)
         prompt = tokenizer.apply_chat_template(conversation, tokenize=False)
-        prompts.append(prompt)
-        conversations.append(conversation)
+        prompts.append(prompt[0])
+        conversations.append(conversation[0])
 
     # Tokenize conversations
     encoding = tokenizer(
@@ -205,10 +206,9 @@ def preprocess(
 
     # Mask targets. Only compute loss on the assistant outputs.
     for conv_index, (conversation, target, prompt) in enumerate(zip(conversations, targets, prompts)):
-
         for turn in conversation:
-            if turn["role"] == "assistant":
-                content = turn["content"]
+            if turn["from"] == "gpt":
+                content = turn["value"]
                 # Unfortunate strip() necessary because chat templates are doing the same.
                 start = prompt.index(content.strip())
                 stop = start + len(content)
@@ -312,8 +312,8 @@ class LazySupervisedDataset(Dataset):
 
         # print("Raw data: ", self.raw_data[i])
         # print("Raw data type: ", type(self.raw_data), type(self.raw_data[i]))
-
-        ret = preprocess([self.raw_data[i]], self.tokenizer)
+      
+        ret = preprocess([self.raw_data[i]['conversations']], self.tokenizer)
         # ret = preprocess(self.raw_data[i], self.tokenizer)
         
         # ret = preprocess_qwen([self.raw_data[i]], self.tokenizer, 4096) # tried
@@ -322,7 +322,7 @@ class LazySupervisedDataset(Dataset):
         # assert(False)
         ret = dict(
             input_ids=ret["input_ids"][0],
-            labels=ret["target_ids"][0],
+            labels=ret["labels"][0],
             attention_mask=ret["attention_mask"][0],
         )
         self.cached_data_dict[i] = ret
@@ -395,19 +395,21 @@ def train():
     )
     tokenizer.pad_token = tokenizer.eos_token
 
-    tokenizer.chat_template = (
-        "{% for message in messages %}"
-        "{% if message['role'] == 'user' %}"
-        "USER: {{ message['content'] }}\n"
-        "{% elif message['role'] == 'assistant' %}"
-        "ASSISTANT: {{ message['content'] }}\n"
-        "{% endif %}"
-        "{% endfor %}"
-        "ASSISTANT:"
-    )
+    vicuna_chat_template = """<s>A chat between a human and an assistant.
+    {% for message in messages %}
+    {% if message['from'] == 'human' %}
+    USER: {{ message['value'] }}
+    {% elif message['from'] == 'gpt' %}
+    ASSISTANT: {{ message['value'] }}
+    {% endif %}
+    {% endfor %}
+    </s>"""
+
+    tokenizer.chat_template = vicuna_chat_template
+
     # Making sure the tokenizer works before loading the model.
     print(tokenizer(["This is a test", "secondary"], padding=True))
-    print(tokenizer.apply_chat_template([{"role": "user", "content": "This is a test"}]))
+    print(tokenizer.apply_chat_template([{"from": "human", "value": "This is a test"}], tokenize = False))
 
     # Load model and tokenizer
     model = transformers.AutoModelForCausalLM.from_pretrained(
@@ -511,6 +513,7 @@ def training_run(epochs, tuning_args):
         "medusa_num_heads": tuning_args["medusa_num_heads"],
         "medusa_num_layers": tuning_args["medusa_num_layers"],
     }
+
     print("Report to: ", training_args.report_to)
 
     local_rank = training_args.local_rank
@@ -533,22 +536,23 @@ def training_run(epochs, tuning_args):
         padding_side="right",
         use_fast=True,
     )
-    tokenizer.pad_token = tokenizer.unk_token
     tokenizer.pad_token = tokenizer.eos_token
 
-    tokenizer.chat_template = (
-        "{% for message in messages %}"
-        "{% if message['from'] == 'human' %}"
-        "USER: {{ message['value'] }}\n"
-        "{% elif message['from'] == 'gpt' %}"
-        "ASSISTANT: {{ message['value'] }}\n"
-        "{% endif %}"
-        "{% endfor %}"
-        "ASSISTANT:"
-    )
+    vicuna_chat_template = """<s>A chat between a human and an assistant.
+    {% for message in messages %}
+    {% if message['from'] == 'human' %}
+    USER: {{ message['value'] }}
+    {% elif message['from'] == 'gpt' %}
+    ASSISTANT: {{ message['value'] }}
+    {% endif %}
+    {% endfor %}
+    </s>"""
+
+    tokenizer.chat_template = vicuna_chat_template
+
     # Making sure the tokenizer works before loading the model.
     print(tokenizer(["This is a test", "secondary"], padding=True))
-    print(tokenizer.apply_chat_template([{"role": "user", "content": "This is a test"}]))
+    print(tokenizer.apply_chat_template([{"from": "human", "value": "This is a test"}], tokenize = False))
 
     # Format output dir
     training_args.output_dir = f"{training_args.output_dir}_medusa_mlp_{model_args.model_name_or_path.split('/')[-1]}_medusa_{training_args.medusa_num_heads}_lr_{training_args.learning_rate}_layers_{training_args.medusa_num_layers}"
@@ -673,7 +677,6 @@ def training_run(epochs, tuning_args):
         )
     
     return avg_latency
-
 
 if __name__ == "__main__":
     train()

@@ -16,7 +16,7 @@ source .env
 set -x
 
 torchrun --nproc_per_node=1 medusa/train/train_legacy.py --model_name_or_path lmsys/vicuna-7b-v1.3 \
-    --data_path mistral.json \
+    --data_path ShareGPT_Vicuna_unfiltered/ShareGPT_V4.3_unfiltered_cleaned_split.json \
     --bf16 True \
     --fp16 False \
     --output_dir test \
