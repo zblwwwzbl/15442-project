@@ -3,6 +3,7 @@ import numpy as np
 from random import random
 from math import log, ceil
 from time import time, ctime
+from itertools import product
 
 
 class Hyperband:
@@ -35,13 +36,14 @@ class Hyperband:
 			# initial number of iterations per config
 			r = self.max_iter * self.eta ** ( -s )		
 
-			# n random configurations
 			medusa_num_heads = [2, 3, 4, 5]
-    		medusa_num_layers = [1, 2]
-
+			medusa_num_layers = [1, 2]
+	
+			T = [
+				{'medusa_num_heads': h, 'medusa_num_layers': l}
+				for h, l in product(medusa_num_heads, medusa_num_layers)
+			]
 		
-			T = []
-			
 			for i in range(( s + 1 ) - int( skip_last )):	# changed from s + 1
 				
 				# Run each of the n configs for <iterations> 
@@ -101,4 +103,3 @@ class Hyperband:
 				T = T[ 0:int( n_configs / self.eta )]
 		
 		return self.results
-	

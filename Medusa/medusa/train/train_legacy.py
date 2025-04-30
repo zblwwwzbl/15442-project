@@ -313,11 +313,11 @@ class LazySupervisedDataset(Dataset):
         # print("Raw data: ", self.raw_data[i])
         # print("Raw data type: ", type(self.raw_data), type(self.raw_data[i]))
 
-        # ret = preprocess([self.raw_data[i]], self.tokenizer)
+        ret = preprocess([self.raw_data[i]], self.tokenizer)
         # ret = preprocess(self.raw_data[i], self.tokenizer)
         
         # ret = preprocess_qwen([self.raw_data[i]], self.tokenizer, 4096) # tried
-        ret = preprocess_qwen(self.raw_data[i], self.tokenizer, 4096)
+        # ret = preprocess_qwen(self.raw_data[i], self.tokenizer, 4096)
         # print("Ret1: ", ret)
         # assert(False)
         ret = dict(
@@ -393,7 +393,6 @@ def train():
         padding_side="right",
         use_fast=True,
     )
-    tokenizer.pad_token = tokenizer.unk_token
     tokenizer.pad_token = tokenizer.eos_token
 
     tokenizer.chat_template = (
@@ -481,8 +480,12 @@ def train():
         )
     return
 
-def training_run(epochs, model_args):
+def training_run(epochs, tuning_args):
     global local_rank
+
+    model_args = {
+        "model_name_or_path": "lmsys/vicuna-7b-v1.3",
+    }
 
     data_args = {
         "data_path":  "ShareGPT_Vicuna_unfiltered/ShareGPT_V4.3_unfiltered_cleaned_split.json",
@@ -505,13 +508,10 @@ def training_run(epochs, model_args):
         "logging_steps": 1,
         "model_max_length": 2048,
         "lazy_preprocess": True,
-        "medusa_num_heads": 3,
-        "medusa_num_layers": 1,
+        "medusa_num_heads": tuning_args["medusa_num_heads"],
+        "medusa_num_layers": tuning_args["medusa_num_layers"],
     }
-    # print args
-    print(model_args)
-    print(data_args)
-    print(training_args)
+    print("Report to: ", training_args.report_to)
 
     local_rank = training_args.local_rank
 
@@ -536,33 +536,55 @@ def training_run(epochs, model_args):
     tokenizer.pad_token = tokenizer.unk_token
     tokenizer.pad_token = tokenizer.eos_token
 
+    tokenizer.chat_template = (
+        "{% for message in messages %}"
+        "{% if message['from'] == 'human' %}"
+        "USER: {{ message['value'] }}\n"
+        "{% elif message['from'] == 'gpt' %}"
+        "ASSISTANT: {{ message['value'] }}\n"
+        "{% endif %}"
+        "{% endfor %}"
+        "ASSISTANT:"
+    )
     # Making sure the tokenizer works before loading the model.
     print(tokenizer(["This is a test", "secondary"], padding=True))
     print(tokenizer.apply_chat_template([{"role": "user", "content": "This is a test"}]))
 
-    # Load model and tokenizer
-    model = transformers.AutoModelForCausalLM.from_pretrained(
-        model_args.model_name_or_path,
-        config=config,
-        cache_dir=training_args.cache_dir,
-        # torch_dtype=torch.bfloat16,
-        torch_dtype=torch.float16,
-    )
+    # Format output dir
+    training_args.output_dir = f"{training_args.output_dir}_medusa_mlp_{model_args.model_name_or_path.split('/')[-1]}_medusa_{training_args.medusa_num_heads}_lr_{training_args.learning_rate}_layers_{training_args.medusa_num_layers}"
+
+    # Instantiate MedusaModel, loading existing heads if available
+    config_dir = training_args.output_dir
+    config_file = os.path.join(config_dir, "config.json")
+    if os.path.isdir(config_dir) and os.path.isfile(config_file):
+        # Load MedusaModel with saved config and head weights
+        medusa_lm_head = MedusaModel.from_pretrained(
+            medusa_head_name_or_path=config_dir,
+            base_model=model,
+            base_model_name_or_path=model_args.model_name_or_path,
+            torch_dtype=torch.float16,
+            cache_dir=training_args.cache_dir,
+        )
+    else:
+        # First-time instantiation
+        medusa_lm_head = MedusaModel(
+            model,
+            medusa_num_heads=training_args.medusa_num_heads,
+            medusa_num_layers=training_args.medusa_num_layers,
+            base_model_name_or_path=model_args.model_name_or_path,
+        )
+        # Load model and tokenizer
+        model = transformers.AutoModelForCausalLM.from_pretrained(
+            model_args.model_name_or_path,
+            config=config,
+            cache_dir=training_args.cache_dir,
+            torch_dtype=torch.float16,
+        )
 
     # Freeze the base model
     for param in model.base_model.parameters():
         param.requires_grad = False
 
-    # Add Medusa heads
-    medusa_lm_head = MedusaModel(
-        model,
-        medusa_num_heads=training_args.medusa_num_heads,
-        medusa_num_layers=training_args.medusa_num_layers,
-        base_model_name_or_path=model_args.model_name_or_path,
-    )
-
-    # Format output dir
-    training_args.output_dir = f"{training_args.output_dir}_medusa_mlp_{model_args.model_name_or_path.split('/')[-1]}_medusa_{training_args.medusa_num_heads}_lr_{training_args.learning_rate}_layers_{training_args.medusa_num_layers}"
 
     # Load data
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
@@ -630,7 +652,7 @@ def training_run(epochs, model_args):
 
     model.config.use_cache = True
     trainer.save_state()
-    safe_save_model_for_hf_trainer(trainer=trainer, output_dir=training_args.output_dir)
+    # safe_save_model_for_hf_trainer(trainer=trainer, output_dir=training_args.output_dir)
     # Save MedusaHead seperately
     if hasattr(medusa_lm_head, "module"):
         lm_head = medusa_lm_head.module.medusa_head
@@ -651,9 +673,6 @@ def training_run(epochs, model_args):
         )
     
     return avg_latency
-
-def load_and_eval_model(model_args):
-
 
 
 if __name__ == "__main__":
