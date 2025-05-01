@@ -1,6 +1,6 @@
 import numpy as np
 
-from random import random
+import random
 from math import log, ceil
 from time import time, ctime
 from itertools import product
@@ -9,7 +9,7 @@ import os
 
 os.environ["WANDB_PROJECT"] = "HyperbandMedusa"
 
-START_SAMPLES = 200
+START_SAMPLES = 600
 
 class Hyperband:
 	
@@ -40,13 +40,17 @@ class Hyperband:
       # initial number of iterations per config
       r = self.max_iter * self.eta ** ( -s )		
 
-      medusa_num_heads = [2, 3, 4, 5]
-      medusa_num_layers = [1, 2]
+      medusa_num_heads = [1, 2, 3, 4, 5]
+      medusa_num_layers = [1, 2, 3]
 
       T = [
         {'medusa_num_heads': h, 'medusa_num_layers': l}
         for h, l in product(medusa_num_heads, medusa_num_layers)
       ]
+
+      random.shuffle(T)
+      T = T[:n] # Only keep the first N iterations for the bracket
+
 
       for i in range(( s + 1 ) - int( skip_last )):	# changed from s + 1
 
@@ -97,7 +101,7 @@ class Hyperband:
           # ["s", "r", "samples", "heads", "layers", "throughput"]
           name_str = "TableLog"# + str(t) + "," + str((s, i))
           self.text_table = wandb.Table(columns=["s", "iteration", "approx samples", "heads", "layers", "time per token"])
-          self.text_table.add_data(s, i, n_epochs * 68623 / 2, t['medusa_num_heads'], t['medusa_num_layers'], loss)
+          self.text_table.add_data(s, i, n_epochs * 68623 * 3 * 0.64, t['medusa_num_heads'], t['medusa_num_layers'], loss)
           wandb_run = wandb.init(project="HyperbandMedusa", name=name_str, reinit=True)
           new_table = wandb.Table(columns=self.text_table.columns, data=self.text_table.data)
           wandb_run.log({"Ablations Table": new_table})

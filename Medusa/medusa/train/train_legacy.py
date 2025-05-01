@@ -96,7 +96,7 @@ class CustomizedTrainer(Trainer):
                 correct_probs.append(correct_prob)
 
             log[f"medusa{i}_loss"] = loss_i.item()
-        self.log(log)
+
         
         # Compute advantage
         advantage = (1 - correct_probs[0]) / 1
@@ -112,7 +112,9 @@ class CustomizedTrainer(Trainer):
         if len(self.advantage_last_10) == 10:
           self.advantage_last_10.pop(0)
         self.advantage_last_10.append(advantage)
+        log["medusa_advantage"] = advantage
 
+        self.log(log)
         return (loss, logits) if return_outputs else loss
 
 

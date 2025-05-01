@@ -2,8 +2,8 @@ import numpy as np
 from train_legacy import training_run
 
 def get_params():
-    medusa_num_heads = [2, 3, 4, 5]
-    medusa_num_layers = [1, 2]
+    medusa_num_heads = [1, 2, 3, 4, 5]
+    medusa_num_layers = [1, 2, 3]
     return
 
 def try_params(n_epochs, tuning_args):
