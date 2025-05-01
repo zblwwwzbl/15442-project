@@ -23,6 +23,7 @@ import pathlib
 from typing import Dict, Optional, Sequence
 
 import numpy as np
+import random
 import torch
 from torch import nn
 from torch.utils.data import Dataset
@@ -38,11 +39,12 @@ from fastchat.model.model_adapter import get_conversation_template
 from torch.nn import CrossEntropyLoss
 from torch.nn import functional as F
 import os
+import wandb
 from medusa.model.medusa_model_legacy import MedusaModel, MedusaConfig
 
 IGNORE_TOKEN_ID = LabelSmoother.ignore_index
 
-os.environ["WANDB_DISABLED"] = "true"
+os.environ["WANDB_PROJECT"] = "HyperbandMedusa"
 
 # Customized for training Medusa heads
 class CustomizedTrainer(Trainer):
@@ -72,6 +74,7 @@ class CustomizedTrainer(Trainer):
         loss = 0
         loss_fct = CrossEntropyLoss()
         log = {}
+        correct_probs = []
         for i in range(medusa):
             medusa_logits = logits[i, :, : -(2 + i)].contiguous()
             medusa_labels = labels[..., 2 + i :].contiguous()
@@ -88,11 +91,28 @@ class CustomizedTrainer(Trainer):
                 _, topk = medusa_logits.topk(k, dim=-1)
                 topk = topk[not_ignore]
                 correct = topk.eq(medusa_labels.unsqueeze(-1)).any(-1)
-                log[f"medusa{i}_top{k}"] = correct.float().mean().item()
+                correct_prob = correct.float().mean().item()
+                log[f"medusa{i}_top{k}"] = correct_prob
+                correct_probs.append(correct_prob)
 
             log[f"medusa{i}_loss"] = loss_i.item()
         self.log(log)
         
+        # Compute advantage
+        advantage = (1 - correct_probs[0]) / 1
+        prob = 1
+        for i in range(len(correct_probs) - 1):
+          next_prob = correct_probs[i + 1]
+          prob *= correct_probs[i]
+          advantage += prob * (1 - next_prob) / (i + 2)
+        final_prob = prob * correct_probs[-1]
+        advantage += final_prob / (len(correct_probs) + 1)
+
+        # Update last 10
+        if len(self.advantage_last_10) == 10:
+          self.advantage_last_10.pop(0)
+        self.advantage_last_10.append(advantage)
+
         return (loss, logits) if return_outputs else loss
 
 
@@ -124,7 +144,7 @@ class DataArguments:
 @dataclass
 class TrainingArguments(transformers.TrainingArguments):
     cache_dir: Optional[str] = field(default=None)
-    report_to: Optional[str] = None
+    report_to: Optional[str] = "wandb"
     optim: str = field(default="adamw_torch")
     model_max_length: int = field(
         default=2048,
@@ -492,7 +512,6 @@ def training_run(n_epochs, tuning_args):
     data_args_dict = {
         "data_path":  "ShareGPT_Vicuna_unfiltered/ShareGPT_V4.3_unfiltered_cleaned_split.json",
     }
-
     training_args_dict = {
         "bf16": True,
         "fp16": False,
@@ -519,6 +538,16 @@ def training_run(n_epochs, tuning_args):
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
     )
+
+    name_config = {
+      "medusa_heads": tuning_args["medusa_num_heads"], 
+      "medusa_layers": tuning_args["medusa_num_layers"], 
+      "epochs": n_epochs, 
+    }
+    name_str = "run:"+str(name_config)
+    run = wandb.init(project="HyperbandMedusa", name=name_str, config=name_config, reinit=True)
+
+
     orig_ctx_len = getattr(config, "max_position_embeddings", None)
     if orig_ctx_len and training_args.model_max_length > orig_ctx_len:
         scaling_factor = float(math.ceil(training_args.model_max_length / orig_ctx_len))
@@ -609,83 +638,22 @@ def training_run(n_epochs, tuning_args):
     # Save Medusa config
     medusa_config.save_pretrained(training_args.output_dir)
 
-    # Start trainner
+    # Start trainer
     trainer = CustomizedTrainer(
         model=medusa_lm_head, tokenizer=tokenizer, args=training_args, **data_module
     )
+    trainer.advantage_last_10 = []
 
     if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
-        trainer.train(resume_from_checkpoint=True)
+        output = trainer.train(resume_from_checkpoint=True)
     else:
-        trainer.train()
-    # === Inference speed evaluation ===
-    # Prepare a single batch for inference speed measurement
-    import time
+        output = trainer.train()
 
-    model = trainer.model
-    model.eval()
-
-    # Select a single prompt from the train dataset
-    example = data_module["train_dataset"][0]
-    input_ids = example["input_ids"].unsqueeze(0)
-    attention_mask = example["attention_mask"].unsqueeze(0)
-
-    device = next(model.parameters()).device
-    input_ids = input_ids.to(device)
-    attention_mask = attention_mask.to(device)
-
-    # Generation arguments for Medusa speculative decoding
-    gen_kwargs = {
-        "input_ids": input_ids,
-        "attention_mask": attention_mask,
-        #TODO: add more args?
-    }
-
-    # Warm-up run (not timed)
-    with torch.no_grad():
-        _ = list(model.medusa_generate(**gen_kwargs))
-        if torch.cuda.is_available():
-            torch.cuda.synchronize()
-
-    # Timed runs for averaging
-    num_runs = 10
-    latencies = []
-    for _ in range(num_runs):
-        start_time = time.time()
-        with torch.no_grad():
-            _ = list(model.medusa_generate(**gen_kwargs))
-            if torch.cuda.is_available():
-                torch.cuda.synchronize()
-        latencies.append(time.time() - start_time)
-
-    avg_latency = sum(latencies) / num_runs
-    requests_per_sec = 1.0 / avg_latency
-    print(f"Avg speculative decoding speed over {num_runs} runs: {requests_per_sec:.2f} requests/sec, avg latency: {avg_latency:.4f} sec")
-    # === End speculative decoding speed evaluation ===
-
-    model.config.use_cache = True
-    trainer.save_state()
-    # safe_save_model_for_hf_trainer(trainer=trainer, output_dir=training_args.output_dir)
-    # Save MedusaHead seperately
-    if hasattr(medusa_lm_head, "module"):
-        lm_head = medusa_lm_head.module.medusa_head
-    else:
-        lm_head = medusa_lm_head.medusa_head
-    import deepspeed
-    with deepspeed.zero.GatheredParameters(lm_head.parameters()):
-        state_dict = lm_head.state_dict()
-
-    # Save Medusa heads
-    if local_rank == 0:
-        # Modify the tokenizer internal state before saving.
-        tokenizer.encode("Test", truncation=None, padding="do_not_pad")
-        tokenizer.save_pretrained(training_args.output_dir)
-        save_file(
-            state_dict,
-            os.path.join(training_args.output_dir, "medusa_lm_head.safetensors"),
-        )
+    ave_advantage = sum(trainer.advantage_last_10) / len(trainer.advantage_last_10)
+    ave_time = 1 / output.metrics['train_samples_per_second'] # gives time / samples
     
-    return avg_latency
-
+    # Compute time per token :)
+    return ave_advantage * ave_time / 10 # Inference time is approx 1/10 of train time
+    
 if __name__ == "__main__":
     train()
